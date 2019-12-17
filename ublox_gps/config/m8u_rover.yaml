@@ -7,7 +7,7 @@ save:
                             # Manager, Antenna, and Logging Configuration
   device: 4                 # Save to EEPROM
 
-device: /dev/gps1
+device: /dev/gps
 frame_id: m8u 
 rate: 4                     # in Hz
 nav_rate: 4                 # [# of measurement cycles], recommended 1 Hz, may 
