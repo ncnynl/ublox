@@ -1,6 +1,7 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(ublox_gps)
 find_package(catkin REQUIRED COMPONENTS
+  tf
   roscpp
   roscpp_serialization
   ublox_msgs
@@ -11,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS roscpp ublox_msgs ublox_serialization)
+    CATKIN_DEPENDS tf roscpp ublox_msgs ublox_serialization)
 
 # include boost
 find_package(Boost REQUIRED COMPONENTS system regex thread)
@@ -42,14 +43,20 @@ target_link_libraries(ublox_gps
 )
 
 # build node
-add_executable(ublox_gps_node src/node.cpp src/mkgmtime.c)
+add_executable(ublox_gps_node src/node.cpp src/mkgmtime.c src/raw_data_pa.cpp)
 set_target_properties(ublox_gps_node PROPERTIES OUTPUT_NAME ublox_gps)
 
 target_link_libraries(ublox_gps_node boost_system boost_regex boost_thread)
 target_link_libraries(ublox_gps_node ${catkin_LIBRARIES})
 target_link_libraries(ublox_gps_node ublox_gps)
 
-install(TARGETS ublox_gps ublox_gps_node
+# build logger node
+add_executable(ublox_logger_node src/logger_node_pa.cpp src/raw_data_pa.cpp)
+set_target_properties(ublox_logger_node PROPERTIES OUTPUT_NAME ublox_logger)
+
+target_link_libraries(ublox_logger_node ${catkin_LIBRARIES})
+
+install(TARGETS ublox_gps ublox_gps_node ublox_logger_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -57,5 +64,15 @@ install(TARGETS ublox_gps ublox_gps_node
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  PATTERN ".svn" EXCLUDE
+)
+
+install(DIRECTORY config/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
+  PATTERN ".svn" EXCLUDE
+)
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
   PATTERN ".svn" EXCLUDE
 )

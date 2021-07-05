@@ -71,6 +71,12 @@ class AsyncWorker : public Worker {
   void setCallback(const Callback& callback) { read_callback_ = callback; }
 
   /**
+   * @brief Set the callback function which handles raw data.
+   * @param callback the write callback which handles raw data
+   */
+  void setRawDataCallback(const Callback& callback) { write_callback_ = callback; }
+
+  /**
    * @brief Send the data bytes via the I/O stream.
    * @param data the buffer of data bytes to send
    * @param size the size of the buffer
@@ -123,6 +129,7 @@ class AsyncWorker : public Worker {
   boost::shared_ptr<boost::thread> background_thread_; //!< thread for the I/O
                                                        //!< service
   Callback read_callback_; //!< Callback function to handle received messages
+  Callback write_callback_; //!< Callback function to handle raw data
 
   bool stopping_; //!< Whether or not the I/O service is closed
 };
@@ -214,6 +221,12 @@ void AsyncWorker<StreamT>::readEnd(const boost::system::error_code& error,
               bytes_transfered);
   } else if (bytes_transfered > 0) {
     in_buffer_size_ += bytes_transfered;
+
+    unsigned char *pRawDataStart = &(*(in_.begin() + (in_buffer_size_ - bytes_transfered)));
+    std::size_t raw_data_stream_size = bytes_transfered;
+
+    if (write_callback_)
+      write_callback_(pRawDataStart, raw_data_stream_size);
 
     if (debug >= 4) {
       std::ostringstream oss;

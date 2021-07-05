@@ -7,7 +7,7 @@ save:
                             # Manager, Antenna, and Logging Configuration
   device: 4                 # Save to EEPROM
 
-device: /dev/gps
+device: /dev/ttyACM0
 frame_id: m8u 
 rate: 4                     # in Hz
 nav_rate: 4                 # [# of measurement cycles], recommended 1 Hz, may 
@@ -22,7 +22,7 @@ enable_ppp: true           # Not supported by C94-M8P
 dr_limit: 1
 
 uart1:
-  baudrate: 9600           # C94-M8P specific
+  baudrate: 115200           # C94-M8P specific
   in: 16                    # RTCM 3
   out: 16                    # No UART out for rover
 

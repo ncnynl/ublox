@@ -34,11 +34,16 @@ namespace ublox_gps {
 
 using namespace ublox_msgs;
 
+//! Sleep time [ms] after setting the baudrate
+constexpr static int kSetBaudrateSleepMs = 500;
+
 const boost::posix_time::time_duration Gps::default_timeout_ =
     boost::posix_time::milliseconds(
         static_cast<int>(Gps::kDefaultAckTimeout * 1000));
 
-Gps::Gps() : configured_(false) { subscribeAcks(); }
+Gps::Gps() : configured_(false), config_on_startup_flag_(true) {
+ subscribeAcks();
+}
 
 Gps::~Gps() { close(); }
 
@@ -154,9 +159,13 @@ void Gps::initializeSerial(std::string port, unsigned int baudrate,
     serial->get_option(current_baudrate);
     ROS_DEBUG("U-Blox: Set ASIO baudrate to %u", current_baudrate.value());
   }
-  configured_ = configUart1(baudrate, uart_in, uart_out);
-  if(!configured_ || current_baudrate.value() != baudrate) {
-    throw std::runtime_error("Could not configure serial baud rate");
+  if (config_on_startup_flag_) {
+    configured_ = configUart1(baudrate, uart_in, uart_out);
+    if(!configured_ || current_baudrate.value() != baudrate) {
+      throw std::runtime_error("Could not configure serial baud rate");
+    }
+  } else {
+    configured_ = true;
   }
 }
 
@@ -370,8 +379,8 @@ bool Gps::configUsb(uint16_t tx_ready,
 }
 
 bool Gps::configRate(uint16_t meas_rate, uint16_t nav_rate) {
-  ROS_DEBUG("Configuring measurement rate to %u and nav rate to %u", meas_rate,
-           nav_rate);
+  ROS_DEBUG("Configuring measurement rate to %u ms and nav rate to %u cycles",
+    meas_rate, nav_rate);
 
   CfgRATE rate;
   rate.measRate = meas_rate;
@@ -493,11 +502,13 @@ bool Gps::setDeadReckonLimit(uint8_t limit) {
   return configure(msg);
 }
 
-bool Gps::setPpp(bool enable) {
+bool Gps::setPpp(bool enable, float protocol_version) {
   ROS_DEBUG("%s PPP", (enable ? "Enabling" : "Disabling"));
 
   ublox_msgs::CfgNAVX5 msg;
   msg.usePPP = enable;
+  if(protocol_version >= 18)
+    msg.version = 2;
   msg.mask1 = ublox_msgs::CfgNAVX5::MASK1_PPP;
   return configure(msg);
 }
@@ -509,11 +520,14 @@ bool Gps::setDgnss(uint8_t mode) {
   return configure(cfg);
 }
 
-bool Gps::setUseAdr(bool enable) {
+bool Gps::setUseAdr(bool enable, float protocol_version) {
   ROS_DEBUG("%s ADR/UDR", (enable ? "Enabling" : "Disabling"));
 
   ublox_msgs::CfgNAVX5 msg;
   msg.useAdr = enable;
+  
+  if(protocol_version >= 18)
+    msg.version = 2;
   msg.mask2 = ublox_msgs::CfgNAVX5::MASK2_ADR;
   return configure(msg);
 }
@@ -550,6 +564,11 @@ bool Gps::waitForAcknowledge(const boost::posix_time::time_duration& timeout,
                 && ack.class_id == class_id
                 && ack.msg_id == msg_id;
   return result;
+}
+
+void Gps::setRawDataCallback(const Worker::Callback& callback) {
+  if (! worker_) return;
+  worker_->setRawDataCallback(callback);
 }
 
 bool Gps::setUTCtime() {

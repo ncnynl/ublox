@@ -67,8 +67,6 @@ constexpr static unsigned int kBaudrates[] = { 4800,
  */
 class Gps {
  public:
-  //! Sleep time [ms] after setting the baudrate
-  constexpr static int kSetBaudrateSleepMs = 500;
   //! Default timeout for ACK messages in seconds
   constexpr static double kDefaultAckTimeout = 1.0;
   //! Size of write buffer for output messages
@@ -84,6 +82,12 @@ class Gps {
   void setSaveOnShutdown(bool save_on_shutdown) {
     save_on_shutdown_ = save_on_shutdown;
   }
+
+  /**
+   * @brief Set the internal flag for enabling or disabling the initial configurations.
+   * @param config_on_startup boolean flag
+   */
+  void setConfigOnStartup(const bool config_on_startup) { config_on_startup_flag_ = config_on_startup; }
 
   /**
    * @brief Initialize TCP I/O.
@@ -276,7 +280,7 @@ class Gps {
    * @note This is part of the expert settings. It is recommended you check
    * the ublox manual first.
    */
-  bool setPpp(bool enable);
+  bool setPpp(bool enable, float protocol_version);
 
   /**
    * @brief Set the DGNSS mode (see CfgDGNSS message for details).
@@ -290,7 +294,7 @@ class Gps {
    * @param enable If true, enable ADR.
    * @return true on ACK, false on other conditions.
    */
-  bool setUseAdr(bool enable);
+  bool setUseAdr(bool enable, float protocol_version);
 
   /**
    * @brief Configure the U-Blox to UTC time 
@@ -393,6 +397,12 @@ class Gps {
   bool waitForAcknowledge(const boost::posix_time::time_duration& timeout,
                           uint8_t class_id, uint8_t msg_id);
 
+  /**
+   * @brief Set the callback function which handles raw data.
+   * @param callback the write callback which handles raw data
+   */
+  void setRawDataCallback(const Worker::Callback& callback);
+
  private:
   //! Types for ACK/NACK messages, WAIT is used when waiting for an ACK
   enum AckType {
@@ -455,6 +465,9 @@ class Gps {
   bool configured_;
   //! Whether or not to save Flash BBR on shutdown
   bool save_on_shutdown_;
+  //!< Whether or not initial configuration to the hardware is done
+  bool config_on_startup_flag_;
+
 
   //! The default timeout for ACK messages
   static const boost::posix_time::time_duration default_timeout_;
