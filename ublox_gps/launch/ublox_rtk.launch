@@ -6,7 +6,7 @@
                                   default="$(find ublox_gps)/config" />
 
   <arg name="node_name"           doc="name of this node"
-                                  default="ublox" />
+                                  default="gps" />
   <arg name="output"              default="screen" />
   <arg name="respawn"             default="true" />
   <arg name="respawn_delay"       default="30" />
