@@ -1,7 +1,7 @@
 # Configuration Settings for ZED-F9P device
 debug: 1                 # Range 0-4 (0 means no debug statements will print)
 
-device: /dev/ttyUSB1    # ZED-F9P rover serial port
+device: /dev/gpsrtk    # ZED-F9P rover serial port
 frame_id: gps
 
 config_on_startup: false # use chip config

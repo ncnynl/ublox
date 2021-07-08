@@ -18,7 +18,7 @@ auth = base64.b64encode("{}:{}".format(username, password).encode('ascii'))
 auth = auth.decode('ascii')
 
 #for serial
-portx="/dev/ttyUSB0"
+portx="/dev/ttyUSB1"
 bps=38400
 timex=5
 ser=serial.Serial(portx,bps,timeout=timex)
@@ -55,8 +55,8 @@ while True:
 
   print "Waiting for answer...\n"
 
-  rtcm = s.recv(2048)
-  print(rtcm)
+  #rtcm = s.recv(2048)
+  #print(rtcm)
   ser.write(s.recv(2048))
   
 
